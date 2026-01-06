@@ -7,11 +7,8 @@ import 'screens/browser_home.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Set preferred orientations
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  // Removed SystemChrome.setPreferredOrientations as it can cause issues on some web renderers
+  // and is primarily for mobile. We can re-enable it conditionally for mobile if needed.
 
   runApp(const PrivacyBrowserApp());
 }

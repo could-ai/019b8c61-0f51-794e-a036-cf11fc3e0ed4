@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -49,15 +50,22 @@ class _BrowserHomeState extends State<BrowserHome> {
   Widget build(BuildContext context) {
     return Consumer<BrowserProvider>(
       builder: (context, provider, child) {
+        // Ensure we have at least one tab
+        if (provider.tabs.isEmpty) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
         final currentTab = provider.currentTab;
         
         // Update text field if the URL changed externally (e.g. link click)
-        // Note: In a real app, use a more robust sync mechanism to avoid cursor jumping
         if (_urlController.text != currentTab.url && !FocusScope.of(context).hasFocus) {
           _urlController.text = currentTab.url;
         }
 
         return Scaffold(
+          backgroundColor: Theme.of(context).colorScheme.surface,
           body: SafeArea(
             child: Column(
               children: [
@@ -75,9 +83,12 @@ class _BrowserHomeState extends State<BrowserHome> {
 
                 // Browser Content
                 Expanded(
-                  child: IndexedStack(
-                    index: provider.currentIndex,
-                    children: provider.tabs.map((tab) => _buildWebView(tab, provider)).toList(),
+                  child: Container(
+                    color: Colors.white, // Fallback background for WebView area
+                    child: IndexedStack(
+                      index: provider.currentIndex,
+                      children: provider.tabs.map((tab) => _buildWebView(tab, provider)).toList(),
+                    ),
                   ),
                 ),
                 
@@ -142,26 +153,32 @@ class _BrowserHomeState extends State<BrowserHome> {
   }
 
   Widget _buildWebView(WebTab tab, BrowserProvider provider) {
-    // Key ensures we don't rebuild the webview unnecessarily
+    // Web-specific settings adjustments
+    final initialSettings = InAppWebViewSettings(
+      // PRIVACY SETTINGS
+      isInspectable: kDebugMode, // Enable debug in dev mode
+      incognito: !kIsWeb, // Incognito not fully supported on all web browsers via iframe
+      cacheEnabled: false,
+      clearCache: true,
+      clearSessionCache: true,
+      
+      // Content Blocking
+      javaScriptEnabled: !provider.blockScripts,
+      
+      // UI Settings
+      useShouldOverrideUrlLoading: true,
+      mediaPlaybackRequiresUserGesture: true,
+      allowsInlineMediaPlayback: true,
+      
+      // Web Specific
+      iframeAllow: "camera; microphone", // Example permissions
+      iframeAllowFullscreen: true,
+    );
+
     return InAppWebView(
       key: ValueKey(tab.id),
       initialUrlRequest: URLRequest(url: WebUri(tab.url)),
-      initialSettings: InAppWebViewSettings(
-        // PRIVACY SETTINGS
-        isInspectable: false, // Disable remote debugging
-        incognito: true, // In-memory storage only (iOS 9+)
-        cacheEnabled: false, // Disable caching
-        clearCache: true, // Clear cache on startup
-        clearSessionCache: true,
-        
-        // Content Blocking
-        javaScriptEnabled: !provider.blockScripts,
-        
-        // UI Settings
-        useShouldOverrideUrlLoading: true,
-        mediaPlaybackRequiresUserGesture: true,
-        allowsInlineMediaPlayback: true,
-      ),
+      initialSettings: initialSettings,
       onWebViewCreated: (controller) {
         provider.setController(tab.id, controller);
       },
