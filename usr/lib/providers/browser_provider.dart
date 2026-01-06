@@ -24,9 +24,13 @@ class BrowserProvider extends ChangeNotifier {
   bool get blockTrackers => _blockTrackers;
 
   void _addNewTab() {
+    // Use example.com for web preview compatibility because DuckDuckGo blocks iframes (X-Frame-Options).
+    // In a real native build, this can be changed back to a search engine.
+    final String defaultUrl = kIsWeb ? 'https://example.com' : 'https://duckduckgo.com';
+    
     final newTab = WebTab(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      url: 'https://duckduckgo.com', // Privacy default
+      url: defaultUrl,
       title: 'New Tab',
     );
     _tabs.add(newTab);
@@ -41,9 +45,10 @@ class BrowserProvider extends ChangeNotifier {
   void closeTab(int index) {
     if (_tabs.length <= 1) {
       // Don't close the last tab, just reset it
-      _tabs[0].url = 'https://duckduckgo.com';
+      final String defaultUrl = kIsWeb ? 'https://example.com' : 'https://duckduckgo.com';
+      _tabs[0].url = defaultUrl;
       _tabs[0].title = 'New Tab';
-      _tabs[0].controller?.loadUrl(urlRequest: URLRequest(url: WebUri('https://duckduckgo.com')));
+      _tabs[0].controller?.loadUrl(urlRequest: URLRequest(url: WebUri(defaultUrl)));
     } else {
       _tabs.removeAt(index);
       if (_currentIndex >= _tabs.length) {
