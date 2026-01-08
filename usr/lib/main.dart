@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
       ),
       home: const Scaffold(
         body: Center(
-          child: Text('Code deleted. Ready for new implementation.'),
+          child: Text('Project reset. Ready for new instructions.'),
         ),
       ),
     );
